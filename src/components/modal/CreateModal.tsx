@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { gsap } from "gsap";
+import gsap from "gsap";
 import {
   Dialog,
   DialogContent,
@@ -148,18 +148,18 @@ export function CreateItemModal({
       <DialogContent
         className={cn(
           "w-[380px] p-0 gap-0 overflow-hidden",
-          "border border-slate-800 bg-slate-950 text-slate-100",
-          "shadow-2xl shadow-black/60"
+          "border border-white/10 bg-white/80 backdrop-blur-lg text-slate-900",
+          "shadow-2xl shadow-black/20"
         )}
       >
         {/* ── header ─────────────────────────────────────────── */}
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-slate-800">
-          <DialogTitle className="text-sm font-semibold text-slate-100 tracking-tight">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10">
+          <DialogTitle className="text-sm font-semibold text-slate-900 tracking-tight">
             Create new item
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500 mt-0.5">
+          <DialogDescription className="text-xs text-slate-600 mt-0.5">
             Inside{" "}
-            <span className="text-slate-300 font-medium">
+            <span className="text-slate-800 font-medium">
               {parentFolderName}
             </span>
           </DialogDescription>
@@ -178,12 +178,12 @@ export function CreateItemModal({
                   onClick={() => handleTypeSelect(type)}
                   className={cn(
                     "relative flex flex-col items-start gap-2.5 rounded-lg border p-3.5 text-left transition-all duration-150 cursor-pointer",
-                    "focus:outline-none focus-visible:ring-1 focus-visible:ring-slate-400",
+                    "focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500",
                     active
                       ? type === "folder"
-                        ? "border-amber-500/60 bg-amber-500/10"
-                        : "border-blue-500/60 bg-blue-500/10"
-                      : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/60"
+                        ? "border-amber-500 bg-amber-400/15"
+                        : "border-blue-500 bg-blue-400/15"
+                      : "border-white/20 bg-white/30 hover:border-white/30 hover:bg-white/40"
                   )}
                 >
                   {/* check badge */}
@@ -204,9 +204,9 @@ export function CreateItemModal({
                       "w-9 h-9 rounded-md flex items-center justify-center",
                       active
                         ? type === "folder"
-                          ? "bg-amber-500/20"
-                          : "bg-blue-500/20"
-                        : "bg-slate-800"
+                          ? "bg-amber-400/25"
+                          : "bg-blue-400/25"
+                        : "bg-white/40"
                     )}
                   >
                     <Icon
@@ -214,9 +214,9 @@ export function CreateItemModal({
                         "w-5 h-5",
                         active
                           ? type === "folder"
-                            ? "text-amber-400"
-                            : "text-blue-400"
-                          : "text-slate-500"
+                            ? "text-amber-600"
+                            : "text-blue-600"
+                          : "text-slate-600"
                       )}
                     />
                   </div>
@@ -226,12 +226,12 @@ export function CreateItemModal({
                     <p
                       className={cn(
                         "text-xs font-semibold leading-none mb-1",
-                        active ? "text-slate-100" : "text-slate-400"
+                        active ? "text-slate-900" : "text-slate-700"
                       )}
                     >
                       {label}
                     </p>
-                    <p className="text-[10px] text-slate-500 leading-snug">
+                    <p className="text-[10px] text-slate-600 leading-snug">
                       {description}
                     </p>
                   </div>
@@ -244,7 +244,7 @@ export function CreateItemModal({
           <div ref={formRef} className="flex flex-col gap-1.5">
             <Label
               htmlFor="item-name"
-              className="text-[11px] font-medium text-slate-400 uppercase tracking-wider"
+              className="text-[11px] font-medium text-slate-700 uppercase tracking-wider"
             >
               Name
             </Label>
@@ -253,8 +253,8 @@ export function CreateItemModal({
                 className={cn(
                   "absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none",
                   selectedType === "folder"
-                    ? "text-amber-400"
-                    : "text-blue-400"
+                    ? "text-amber-600"
+                    : "text-blue-600"
                 )}
               />
               <Input
@@ -269,7 +269,7 @@ export function CreateItemModal({
                 placeholder={placeholder}
                 className={cn(
                   "pl-8 text-sm h-9",
-                  "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-600",
+                  "bg-white/50 backdrop-blur-sm border-white/20 text-slate-900 placeholder:text-slate-500",
                   "focus-visible:ring-1",
                   selectedType === "folder"
                     ? "focus-visible:ring-amber-500/50 focus-visible:border-amber-500/50"
@@ -281,32 +281,32 @@ export function CreateItemModal({
 
             {/* error */}
             {error && (
-              <p className="text-[11px] text-red-400">{error}</p>
+              <p className="text-[11px] text-red-600">{error}</p>
             )}
 
             {/* hint: auto .txt */}
             {selectedType === "textfile" &&
               name.trim() &&
               !name.trim().endsWith(".txt") && (
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[10px] text-slate-600">
                   Will be saved as{" "}
-                  <span className="text-slate-300">{name.trim()}.txt</span>
+                  <span className="text-slate-800">{name.trim()}.txt</span>
                 </p>
               )}
           </div>
         </div>
 
         {/* ── footer ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-800 bg-slate-900/50">
-          <p className="text-[10px] text-slate-600">
-            Press <kbd className="font-mono text-slate-500">Enter</kbd> to
+        <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 bg-white/20">
+          <p className="text-[10px] text-slate-700">
+            Press <kbd className="font-mono text-slate-600">Enter</kbd> to
             create
           </p>
           <div className="flex gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 px-3 text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+              className="h-8 px-3 text-xs text-slate-700 hover:text-slate-900 hover:bg-white/30"
               onClick={() => onOpenChange(false)}
             >
               Cancel
@@ -316,7 +316,7 @@ export function CreateItemModal({
               className={cn(
                 "h-8 px-4 text-xs font-semibold transition-all",
                 selectedType === "folder"
-                  ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                  ? "bg-amber-500 hover:bg-amber-400 text-white"
                   : "bg-blue-600 hover:bg-blue-500 text-white"
               )}
               onClick={handleSubmit}

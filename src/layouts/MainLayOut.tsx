@@ -7,7 +7,7 @@ export default function MainLayout() {
   const fs = useFileSystem();
 
   return (
-    <TooltipProvider delayDuration={300}>
+ <TooltipProvider delayDuration={300}>
       <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
         <Sidebar
           root={fs.root}
@@ -18,8 +18,8 @@ export default function MainLayout() {
           onToggleFolder={fs.toggleFolder}
           onOpenFile={fs.openFile}
           onCreateNode={fs.createNode}
-          onRename={fs.openRenameModal}
-          onDelete={fs.openDeleteModal}
+          onRename={fs.renameNode}
+          onDelete={fs.deleteNode}
         />
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <Outlet context={fs} />

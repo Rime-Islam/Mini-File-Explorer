@@ -25,6 +25,14 @@ import {
 } from "lucide-react";
 import type { FileSystemNode, FolderNode, NodeType } from "@/types";
 import { CreateItemModal } from "@/components/modal/CreateModal";
+import { RenameModal } from "@/components/modal/RenameModal";
+import { DeleteModal } from "@/components/modal/DeleteModal";
+
+type ModalState =
+  | { type: "none" }
+  | { type: "create" }
+  | { type: "rename" }
+  | { type: "delete" };
 
 interface TreeNodeProps {
   node: FileSystemNode;
@@ -35,7 +43,7 @@ interface TreeNodeProps {
   onToggle: (id: string) => void;
   onOpenFile: (id: string) => void;
   onCreateNode: (parentId: string, name: string, type: NodeType) => void;
-  onRename: (id: string, name: string) => void;
+  onRename: (id: string, newName: string) => void;
   onDelete: (id: string) => void;
 }
 
@@ -52,14 +60,13 @@ export function TreeNode({
   onDelete,
 }: TreeNodeProps) {
   const childrenRef = useRef<HTMLDivElement>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modal, setModal] = useState<ModalState>({ type: "none" });
 
   const folder = node.type === "folder" ? (node as FolderNode) : null;
   const isActive = node.id === activeFolderId;
   const isSelected = node.id === selectedId;
   const isExpanded = folder?.isExpanded ?? false;
 
-  // GSAP: animate children open/close
   useEffect(() => {
     const el = childrenRef.current;
     if (!el || !folder) return;
@@ -80,7 +87,8 @@ export function TreeNode({
     }
   }, [isExpanded]);
 
-  function handleClick() {
+  // ── click handlers ────────────────────────────────────────────────────────
+  function handleRowClick() {
     if (folder) {
       onToggle(node.id);
       onNavigate(node.id);
@@ -89,117 +97,191 @@ export function TreeNode({
     }
   }
 
-  // Opens this node's own modal
-  function openModal(e?: React.MouseEvent) {
+  function openCreate(e?: React.MouseEvent) {
     e?.stopPropagation();
-    setModalOpen(true);
+    setModal({ type: "create" });
   }
 
+  function openRename(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setModal({ type: "rename" });
+  }
+
+  function openDelete(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setModal({ type: "delete" });
+  }
+
+  function closeModal() {
+    setModal({ type: "none" });
+  }
+
+  // ── modal action callbacks ─────────────────────────────────────────────────
   function handleCreate(name: string, type: NodeType) {
     onCreateNode(node.id, name, type);
   }
 
-  const paddingLeft = 10 + depth * 14;
+  function handleRename(newName: string) {
+    onRename(node.id, newName);
+  }
+
+  function handleDelete() {
+    onDelete(node.id);
+  }
+
+  // ── layout ────────────────────────────────────────────────────────────────
+  const paddingLeft = 10 + depth * 16;
 
   const rowContent = (
     <div
       className={cn(
-        "group flex items-center gap-1.5 py-[5px] pr-2 rounded-md cursor-pointer select-none text-sm transition-colors",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive && "bg-accent text-accent-foreground font-medium",
-        isSelected && !isActive && "bg-muted"
+        "group flex items-center gap-1.5 py-[6px] pr-2 rounded-lg cursor-pointer select-none text-sm transition-all duration-200",
+        "hover:bg-white/60 hover:shadow-sm hover:border hover:border-white/30",
+        isActive && "bg-white/70 shadow-sm border border-amber-200/50 font-medium",
+        isSelected && !isActive && "bg-white/40 shadow-[0_0_0_1px_rgba(0,0,0,0.04)]"
       )}
       style={{ paddingLeft }}
-      onClick={handleClick}
+      onClick={handleRowClick}
     >
-      {/* chevron */}
+      {/* chevron — only for folders */}
       {folder ? (
-        <span className="text-muted-foreground w-3.5 flex-shrink-0">
+        <span className="w-4 flex-shrink-0 flex items-center justify-center">
           {isExpanded ? (
-            <ChevronDown className="w-3 h-3" />
+            <ChevronDown className="w-3 h-3 text-slate-500" strokeWidth={2.5} />
           ) : (
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3 h-3 text-slate-500" strokeWidth={2.5} />
           )}
         </span>
       ) : (
-        <span className="w-3.5 flex-shrink-0" />
+        <span className="w-4 flex-shrink-0" />
       )}
 
       {/* icon */}
       {folder ? (
         isExpanded ? (
-          <FolderOpen className="w-4 h-4 flex-shrink-0 text-amber-400" />
+          <FolderOpen className="w-4 h-4 flex-shrink-0 text-amber-600" strokeWidth={2.2} />
         ) : (
-          <Folder className="w-4 h-4 flex-shrink-0 text-amber-400" />
+          <Folder className="w-4 h-4 flex-shrink-0 text-amber-500" strokeWidth={2.2} />
         )
       ) : (
-        <FileText className="w-4 h-4 flex-shrink-0 text-blue-400" />
+        <FileText className="w-4 h-4 flex-shrink-0 text-blue-600" strokeWidth={2.2} />
       )}
 
       {/* name */}
-      <span className="flex-1 truncate text-[12.5px]">{node.name}</span>
+      <span
+        className={cn(
+          "flex-1 truncate text-[12.5px] transition-colors",
+          isActive ? "text-slate-900" : "text-slate-700"
+        )}
+      >
+        {node.name}
+      </span>
 
-      {/* child count badge */}
+      {/* child count badge — folders only, when collapsed */}
       {folder && folder.children.length > 0 && !isExpanded && (
-        <span className="text-[10px] bg-muted text-muted-foreground rounded px-1 py-0.5 leading-none">
+        <span className="text-[10px] bg-slate-100 text-slate-600 rounded-md px-1.5 py-0.5 leading-none font-medium border border-slate-200/50">
           {folder.children.length}
         </span>
       )}
 
-      {/* inline + button — only on folders, visible on hover */}
-      {folder && (
+      {/* hover action buttons */}
+      <span className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+        {/* + new item — folders only */}
+        {folder && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="p-1 rounded-md hover:bg-amber-100/60 transition-colors"
+                onClick={openCreate}
+                aria-label={`New item in ${node.name}`}
+              >
+                <Plus className="w-3 h-3 text-amber-700" strokeWidth={2.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-[11px]">New item</TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* rename */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-border"
-              onClick={openModal}
-              aria-label={`New item in ${node.name}`}
+              className="p-1 rounded-md hover:bg-slate-200/60 transition-colors"
+              onClick={openRename}
+              aria-label={`Rename ${node.name}`}
             >
-              <Plus className="w-3 h-3 text-muted-foreground" />
+              <Pencil className="w-3 h-3 text-slate-600" strokeWidth={2.5} />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">New item in {node.name}</TooltipContent>
+          <TooltipContent side="right" className="text-[11px]">Rename</TooltipContent>
         </Tooltip>
-      )}
+
+        {/* delete */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="p-1 rounded-md hover:bg-red-100/60 transition-colors"
+              onClick={openDelete}
+              aria-label={`Delete ${node.name}`}
+            >
+              <Trash2 className="w-3 h-3 text-slate-500 hover:text-red-600" strokeWidth={2.5} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="text-[11px]">Delete</TooltipContent>
+        </Tooltip>
+      </span>
     </div>
   );
 
   return (
     <div>
+      {/* ── row with context menu ─────────────────────────────────────────── */}
       <ContextMenu>
         <ContextMenuTrigger asChild>{rowContent}</ContextMenuTrigger>
-        <ContextMenuContent className="w-44">
-          {/* folder actions */}
+
+        <ContextMenuContent className="w-48 bg-white/90 backdrop-blur-lg border-white/20 shadow-xl">
+          {/* folder-only: open & new item */}
           {folder && (
-            <ContextMenuItem onClick={() => openModal()}>
-              <Plus className="w-3.5 h-3.5 mr-2" />
-              New item inside
-            </ContextMenuItem>
+            <>
+              <ContextMenuItem onClick={() => { onNavigate(node.id); onToggle(node.id); }} className="gap-2">
+                <FolderOpen className="w-3.5 h-3.5 text-amber-600" strokeWidth={2.2} />
+                Open folder
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => openCreate()} className="gap-2">
+                <Plus className="w-3.5 h-3.5 text-amber-600" strokeWidth={2.5} />
+                New item inside
+              </ContextMenuItem>
+            </>
           )}
-          {/* file actions */}
+
+          {/* file-only: open */}
           {!folder && (
-            <ContextMenuItem onClick={() => onOpenFile(node.id)}>
-              <FileText className="w-3.5 h-3.5 mr-2" />
+            <ContextMenuItem onClick={() => onOpenFile(node.id)} className="gap-2">
+              <FileText className="w-3.5 h-3.5 text-blue-600" strokeWidth={2.2} />
               Open file
             </ContextMenuItem>
           )}
-          <ContextMenuSeparator />
-          <ContextMenuItem onClick={() => onRename(node.id, node.name)}>
-            <Pencil className="w-3.5 h-3.5 mr-2" />
+
+          <ContextMenuSeparator className="bg-slate-200/50" />
+
+          <ContextMenuItem onClick={() => openRename()} className="gap-2">
+            <Pencil className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
             Rename
           </ContextMenuItem>
-          <ContextMenuSeparator />
+
+          <ContextMenuSeparator className="bg-slate-200/50" />
+
           <ContextMenuItem
-            onClick={() => onDelete(node.id)}
-            className="text-destructive focus:text-destructive"
+            onClick={() => openDelete()}
+            className="text-red-600 focus:text-red-600 focus:bg-red-50 gap-2"
           >
-            <Trash2 className="w-3.5 h-3.5 mr-2" />
+            <Trash2 className="w-3.5 h-3.5 text-red-500" strokeWidth={2.5} />
             {folder ? "Delete folder" : "Delete file"}
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* children — GSAP controls height */}
+      {/* ── children ─────────────────────────────────────────────────────── */}
       {folder && (
         <div
           ref={childrenRef}
@@ -223,15 +305,34 @@ export function TreeNode({
         </div>
       )}
 
-      {/* modal — only rendered for folder nodes */}
+      {/* create — only for folders */}
       {folder && (
         <CreateItemModal
-          open={modalOpen}
+          open={modal.type === "create"}
           parentFolderName={node.name}
-          onOpenChange={setModalOpen}
+          onOpenChange={(open) => !open && closeModal()}
           onCreate={handleCreate}
         />
       )}
+
+      {/* rename — folders and files */}
+      <RenameModal
+        open={modal.type === "rename"}
+        currentName={node.name}
+        nodeType={node.type}
+        onOpenChange={(open) => !open && closeModal()}
+        onRename={handleRename}
+      />
+
+      {/* delete — folders and files */}
+      <DeleteModal
+        open={modal.type === "delete"}
+        nodeName={node.name}
+        nodeType={node.type}
+        childCount={folder?.children.length ?? 0}
+        onOpenChange={(open) => !open && closeModal()}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
