@@ -3,8 +3,6 @@ import type { FileSystemNode, FolderNode, PersistedFileSystem } from "@/types";
 const STORAGE_KEY = "webbly_file_explorer_v1";
 const SCHEMA_VERSION = 1;
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -34,8 +32,6 @@ function makeFile(name: string, content = "") {
     updatedAt: now,
   };
 }
-
-// ─── seed data ────────────────────────────────────────────────────────────────
 
 export function buildSeedData(): FolderNode {
   return {
@@ -77,8 +73,6 @@ export function buildSeedData(): FolderNode {
     isExpanded: true,
   };
 }
-
-// ─── persistence ──────────────────────────────────────────────────────────────
 
 export function loadFromStorage(): FolderNode {
   try {

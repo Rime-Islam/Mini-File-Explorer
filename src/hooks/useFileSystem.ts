@@ -7,16 +7,7 @@ import type {
   NodeType,
 } from "@/types";
 import { loadFromStorage, saveToStorage } from "@/utils/storage";
-import {
-  treeInsertNode,
-  treeRenameNode,
-  treeDeleteNode,
-  treeUpdateContent,
-  treeToggleExpanded,
-  getBreadcrumbs,
-  findNodeById,
-  isFolder,
-} from "@/utils/treeHelpers";
+import { findNodeById, getBreadcrumbs, isFolder, treeDeleteNode, treeInsertNode, treeRenameNode, treeToggleExpanded, treeUpdateContent } from "@/utils/Treehelpers";
 
 export function useFileSystem() {
   const [root, setRoot] = useState<FolderNode>(() => loadFromStorage());
@@ -26,18 +17,13 @@ export function useFileSystem() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
 
-  // Persist on every root change
   useEffect(() => {
     saveToStorage(root);
   }, [root]);
 
-  // ─── derived state ─────────────────────────────────────────────────────────
-
   const activeFolder = (findNodeById(root, activeFolderId) as FolderNode | null) ?? root;
   const breadcrumbs = getBreadcrumbs(root, activeFolderId);
   const openFile = openFileId ? findNodeById(root, openFileId) : null;
-
-  // ─── navigation ────────────────────────────────────────────────────────────
 
   const navigateTo = useCallback((folderId: string) => {
     setActiveFolderId(folderId);
@@ -47,8 +33,6 @@ export function useFileSystem() {
   const toggleFolder = useCallback((id: string) => {
     setRoot((prev) => treeToggleExpanded(prev, id));
   }, []);
-
-  // ─── selection & opening ───────────────────────────────────────────────────
 
   const selectNode = useCallback((id: string | null) => {
     setSelectedId(id);
@@ -73,8 +57,6 @@ export function useFileSystem() {
     },
     [navigateTo, toggleFolder, openFile_]
   );
-
-  // ─── CRUD ──────────────────────────────────────────────────────────────────
 
   const createNode = useCallback(
     (parentId: string, name: string, type: NodeType) => {
@@ -102,8 +84,6 @@ export function useFileSystem() {
   const updateFileContent = useCallback((id: string, content: string) => {
     setRoot((prev) => treeUpdateContent(prev, id, content));
   }, []);
-
-  // ─── modal helpers ─────────────────────────────────────────────────────────
 
   const openCreateModal = useCallback((parentId: string) => {
     setActiveModal({ type: "create", parentId });
