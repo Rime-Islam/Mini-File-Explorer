@@ -34,13 +34,10 @@ export function RenameModal({
 
   const formRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Sync name when modal opens with a different node
   useEffect(() => {
     if (open) {
       setName(currentName);
       setError("");
-      // Animate in
       setTimeout(() => {
         if (formRef.current) {
           gsap.fromTo(
@@ -49,7 +46,7 @@ export function RenameModal({
             { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" }
           );
         }
-        // Select all text so user can type immediately
+
         if (inputRef.current) {
           inputRef.current.focus();
           inputRef.current.select();
@@ -68,12 +65,9 @@ export function RenameModal({
     }
 
     if (trimmed === currentName) {
-      // No change — just close
       onOpenChange(false);
       return;
     }
-
-    // Auto-append .txt for text files if user removed it
     const finalName =
       nodeType === "textfile" && !trimmed.endsWith(".txt")
         ? `${trimmed}.txt`
@@ -113,7 +107,6 @@ export function RenameModal({
           "shadow-2xl shadow-black/20"
         )}
       >
-        {/* header */}
         <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <div
@@ -138,7 +131,6 @@ export function RenameModal({
           </div>
         </DialogHeader>
 
-        {/* body */}
         <div className="px-5 py-4">
           <div ref={formRef} className="flex flex-col gap-1.5">
             <Label
@@ -178,7 +170,6 @@ export function RenameModal({
               <p className="text-[11px] text-red-600">{error}</p>
             )}
 
-            {/* hint: auto .txt */}
             {nodeType === "textfile" &&
               name.trim() &&
               !name.trim().endsWith(".txt") && (
@@ -190,7 +181,6 @@ export function RenameModal({
           </div>
         </div>
 
-        {/* footer */}
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 bg-white/20">
           <p className="text-[10px] text-slate-700">
             Press <kbd className="font-mono text-slate-600">Enter</kbd> to save

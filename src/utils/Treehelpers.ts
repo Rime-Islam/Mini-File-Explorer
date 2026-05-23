@@ -1,4 +1,9 @@
-import type { FileSystemNode, FolderNode, NodeType,TextFileNode } from "@/types";
+import type {
+  FileSystemNode,
+  FolderNode,
+  NodeType,
+  TextFileNode,
+} from "@/types";
 import { generateId } from "./storage";
 
 export function isFolder(node: FileSystemNode): node is FolderNode {
@@ -11,7 +16,7 @@ export function isTextFile(node: FileSystemNode): node is TextFileNode {
 
 export function findNodeById(
   root: FolderNode,
-  id: string
+  id: string,
 ): FileSystemNode | null {
   if (root.id === id) return root;
   for (const child of root.children) {
@@ -26,7 +31,7 @@ export function findNodeById(
 
 export function findParentFolder(
   root: FolderNode,
-  id: string
+  id: string,
 ): FolderNode | null {
   for (const child of root.children) {
     if (child.id === id) return root;
@@ -40,11 +45,11 @@ export function findParentFolder(
 
 export function getBreadcrumbs(
   root: FolderNode,
-  targetId: string
+  targetId: string,
 ): Array<{ id: string; name: string }> {
   function search(
     node: FolderNode,
-    path: Array<{ id: string; name: string }>
+    path: Array<{ id: string; name: string }>,
   ): Array<{ id: string; name: string }> | null {
     const current = [...path, { id: node.id, name: node.name }];
     if (node.id === targetId) return current;
@@ -73,13 +78,11 @@ export function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// ─── immutable tree mutations ─────────────────────────────────────────────────
-
 export function treeInsertNode(
   root: FolderNode,
   parentId: string,
   name: string,
-  type: NodeType
+  type: NodeType,
 ): FolderNode {
   const now = Date.now();
   const newNode: FileSystemNode =
@@ -115,7 +118,7 @@ export function treeInsertNode(
     return {
       ...node,
       children: node.children.map((child) =>
-        isFolder(child) ? insert(child) : child
+        isFolder(child) ? insert(child) : child,
       ),
     };
   }
@@ -125,7 +128,7 @@ export function treeInsertNode(
 export function treeRenameNode(
   root: FolderNode,
   id: string,
-  newName: string
+  newName: string,
 ): FolderNode {
   const now = Date.now();
   function rename(node: FolderNode): FolderNode {
@@ -156,7 +159,7 @@ export function treeDeleteNode(root: FolderNode, id: string): FolderNode {
 export function treeUpdateContent(
   root: FolderNode,
   id: string,
-  content: string
+  content: string,
 ): FolderNode {
   const now = Date.now();
   function update(node: FolderNode): FolderNode {
@@ -179,16 +182,13 @@ export function treeUpdateContent(
   return update(root);
 }
 
-export function treeToggleExpanded(
-  root: FolderNode,
-  id: string
-): FolderNode {
+export function treeToggleExpanded(root: FolderNode, id: string): FolderNode {
   function toggle(node: FolderNode): FolderNode {
     if (node.id === id) return { ...node, isExpanded: !node.isExpanded };
     return {
       ...node,
       children: node.children.map((child) =>
-        isFolder(child) ? toggle(child) : child
+        isFolder(child) ? toggle(child) : child,
       ),
     };
   }

@@ -1,17 +1,28 @@
 import { useState, useCallback, useEffect } from "react";
 import type {
   FolderNode,
-  FileSystemNode, 
+  FileSystemNode,
   ViewMode,
   ActiveModal,
   NodeType,
 } from "@/types";
 import { loadFromStorage, saveToStorage } from "@/utils/storage";
-import { findNodeById, getBreadcrumbs, isFolder, treeDeleteNode, treeInsertNode, treeRenameNode, treeToggleExpanded, treeUpdateContent } from "@/utils/Treehelpers";
+import {
+  findNodeById,
+  getBreadcrumbs,
+  isFolder,
+  treeDeleteNode,
+  treeInsertNode,
+  treeRenameNode,
+  treeToggleExpanded,
+  treeUpdateContent,
+} from "@/utils/treeHelpers";
 
 export function useFileSystem() {
   const [root, setRoot] = useState<FolderNode>(() => loadFromStorage());
-  const [activeFolderId, setActiveFolderId] = useState<string>(() => loadFromStorage().id);
+  const [activeFolderId, setActiveFolderId] = useState<string>(
+    () => loadFromStorage().id,
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openFileId, setOpenFileId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -21,9 +32,9 @@ export function useFileSystem() {
     saveToStorage(root);
   }, [root]);
 
-  const activeFolder = (findNodeById(root, activeFolderId) as FolderNode | null) ?? root;
+  const activeFolder =
+    (findNodeById(root, activeFolderId) as FolderNode | null) ?? root;
   const breadcrumbs = getBreadcrumbs(root, activeFolderId);
-  // const openFile = openFileId ? findNodeById(root, openFileId) : null;
 
   const navigateTo = useCallback((folderId: string) => {
     setActiveFolderId(folderId);
@@ -38,13 +49,10 @@ export function useFileSystem() {
     setSelectedId(id);
   }, []);
 
-  const openFile_ = useCallback(
-    (id: string | null) => {
-      setOpenFileId(id);
-      if (id) setSelectedId(id);
-    },
-    []
-  );
+  const openFile_ = useCallback((id: string | null) => {
+    setOpenFileId(id);
+    if (id) setSelectedId(id);
+  }, []);
 
   const handleNodeClick = useCallback(
     (node: FileSystemNode) => {
@@ -55,14 +63,14 @@ export function useFileSystem() {
         openFile_(node.id);
       }
     },
-    [navigateTo, toggleFolder, openFile_]
+    [navigateTo, toggleFolder, openFile_],
   );
 
   const createNode = useCallback(
     (parentId: string, name: string, type: NodeType) => {
       setRoot((prev) => treeInsertNode(prev, parentId, name.trim(), type));
     },
-    []
+    [],
   );
 
   const renameNode = useCallback((id: string, newName: string) => {
@@ -75,10 +83,9 @@ export function useFileSystem() {
       setRoot((prev) => treeDeleteNode(prev, id));
       if (selectedId === id) setSelectedId(null);
       if (openFileId === id) setOpenFileId(null);
-      // If deleted folder was active, go up to root
       if (activeFolderId === id) setActiveFolderId(root.id);
     },
-    [selectedId, openFileId, activeFolderId, root.id]
+    [selectedId, openFileId, activeFolderId, root.id],
   );
 
   const updateFileContent = useCallback((id: string, content: string) => {
@@ -105,13 +112,12 @@ export function useFileSystem() {
         childCount: isFolder(node) ? node.children.length : 0,
       });
     },
-    [root]
+    [root],
   );
 
   const closeModal = useCallback(() => setActiveModal(null), []);
 
   return {
-    // state
     root,
     activeFolder,
     activeFolderId,
@@ -119,8 +125,6 @@ export function useFileSystem() {
     selectedId,
     viewMode,
     activeModal,
-
-    // actions
     navigateTo,
     toggleFolder,
     selectNode,
@@ -131,8 +135,6 @@ export function useFileSystem() {
     deleteNode,
     updateFileContent,
     setViewMode,
-
-    // modal helpers
     openCreateModal,
     openRenameModal,
     openDeleteModal,

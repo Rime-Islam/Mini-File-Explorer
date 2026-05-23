@@ -7,7 +7,7 @@ export default function MainLayout() {
   const fs = useFileSystem();
 
   return (
- <TooltipProvider delayDuration={300}>
+    <TooltipProvider delayDuration={300}>
       <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
         <Sidebar
           root={fs.root}

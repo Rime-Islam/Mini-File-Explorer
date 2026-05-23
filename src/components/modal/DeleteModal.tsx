@@ -34,7 +34,6 @@ export function DeleteModal({
 
   const isFolder = nodeType === "folder";
 
-  // Animate in + shake the delete button to signal danger
   useEffect(() => {
     if (!open) return;
     setTimeout(() => {
@@ -45,7 +44,6 @@ export function DeleteModal({
           { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" }
         );
       }
-      // Subtle pulse on the delete button after mount
       if (btnRef.current) {
         gsap.fromTo(
           btnRef.current,
@@ -85,7 +83,6 @@ export function DeleteModal({
         )}
         onKeyDown={handleKeyDown}
       >
-        {/* header */}
         <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 bg-red-400/20">
@@ -102,9 +99,7 @@ export function DeleteModal({
           </div>
         </DialogHeader>
 
-        {/* body */}
         <div ref={contentRef} className="px-5 py-4 flex flex-col gap-3">
-          {/* file/folder preview pill */}
           <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/50 backdrop-blur-sm border border-white/20">
             <Icon
               className={cn(
@@ -122,8 +117,6 @@ export function DeleteModal({
               </span>
             )}
           </div>
-
-          {/* warning text */}
           <p className="text-xs text-slate-600 leading-relaxed">
             {isFolder && childCount > 0 ? (
               <>
@@ -148,7 +141,6 @@ export function DeleteModal({
           </p>
         </div>
 
-        {/* footer */}
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 bg-white/20">
           <p className="text-[10px] text-slate-700">
             Press <kbd className="font-mono text-slate-600">Enter</kbd> to confirm

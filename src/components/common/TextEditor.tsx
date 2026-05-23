@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   FileText,
-  X,
   Save,
+  X,
   RotateCcw,
+  CheckCircle2,
+  AlignLeft,
+  Hash,
+  Type,
 } from "lucide-react";
 import type { TextFileNode } from "@/types";
-import { formatSize } from "@/utils/Treehelpers";
 
 interface TextEditorProps {
   file: TextFileNode;
@@ -19,192 +22,179 @@ interface TextEditorProps {
 
 export function TextEditor({ file, onSave, onClose }: TextEditorProps) {
   const [content, setContent] = useState(file.content);
-  const [isSaved, setIsSaved] = useState(true);
+  const [savedContent, setSavedContent] = useState(file.content);
+  const [justSaved, setJustSaved] = useState(false);
 
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const savedBadgeRef = useRef<HTMLSpanElement>(null);
+
+  const isDirty = content !== savedContent;
 
   useEffect(() => {
     setContent(file.content);
-    setIsSaved(true);
-  }, [file.id, file.content]);
+    setSavedContent(file.content);
+    setJustSaved(false);
+  }, [file.id]);
 
-  // GSAP: slide up on mount
   useEffect(() => {
-    if (overlayRef.current && panelRef.current) {
-      gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" });
-      gsap.fromTo(panelRef.current, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" });
-    }
-  }, []);
+    if (!wrapperRef.current) return;
+    gsap.fromTo(
+      wrapperRef.current,
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.28, ease: "power2.out" },
+    );
+    setTimeout(() => textareaRef.current?.focus(), 180);
+  }, [file.id]);
 
-  // Ctrl+S / Cmd+S to save
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
-        handleSave();
-      }
-      if (e.key === "Escape") {
-        handleClose();
+        save();
       }
     },
-    [content]
+    [content],
   );
 
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  function handleChange(val: string) {
-    setContent(val);
-    setIsSaved(false);
-  }
-
-  function handleSave() {
+  function save() {
     onSave(file.id, content);
-    setIsSaved(true);
-    // Show saved state briefly
-    if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
-    savedTimerRef.current = setTimeout(() => setIsSaved(true), 2000);
-  }
-
-  function handleDiscard() {
-    setContent(file.content);
-    setIsSaved(true);
-  }
-
-  function handleClose() {
-    if (!isSaved) {
-      // Shake panel to signal unsaved changes
-      if (panelRef.current) {
-        gsap.fromTo(
-          panelRef.current,
-          { x: -6 },
-          { x: 0, duration: 0.4, ease: "elastic.out(1, 0.4)" }
-        );
-      }
-      return;
+    setSavedContent(content);
+    setJustSaved(true);
+    if (savedBadgeRef.current) {
+      gsap.fromTo(
+        savedBadgeRef.current,
+        { scale: 0.8, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.22, ease: "back.out(2)" },
+      );
     }
-    animateClose(onClose);
+    setTimeout(() => setJustSaved(false), 2200);
   }
 
-  function handleForceClose() {
-    animateClose(onClose);
+  function discard() {
+    setContent(savedContent);
   }
 
-  function animateClose(cb: () => void) {
-    if (overlayRef.current && panelRef.current) {
-      gsap.to(panelRef.current, { y: 16, opacity: 0, duration: 0.18, ease: "power2.in" });
-      gsap.to(overlayRef.current, { opacity: 0, duration: 0.2, ease: "power2.in", onComplete: cb });
-    } else {
-      cb();
-    }
-  }
-
-  const lineCount = content.split("\n").length;
-  const charCount = content.length;
+  const lines = content.split("\n").length;
+  const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const chars = content.length;
 
   return (
     <div
-      ref={overlayRef}
-      className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+      ref={wrapperRef}
+      className="flex flex-col flex-1 h-full min-h-0 bg-white"
     >
-      <div
-        ref={panelRef}
-        className="w-full max-w-3xl h-full max-h-[80vh] flex flex-col rounded-xl border border-slate-700 bg-slate-950 shadow-2xl shadow-black/80 overflow-hidden"
-      >
-        {/* ── title bar ───────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/60">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-6 h-6 rounded flex items-center justify-center bg-blue-500/15 flex-shrink-0">
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-            </div>
-            <span className="text-sm font-medium text-slate-100 truncate">
-              {file.name}
-            </span>
-            {!isSaved && (
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" title="Unsaved changes" />
-            )}
-          </div>
-
-          {/* actions */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {!isSaved && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2.5 text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 gap-1.5"
-                onClick={handleDiscard}
-              >
-                <RotateCcw className="w-3 h-3" />
-                Discard
-              </Button>
-            )}
-            <Button
-              size="sm"
-              className={cn(
-                "h-7 px-3 text-xs font-medium gap-1.5 transition-all",
-                isSaved
-                  ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
-                  : "bg-blue-600 hover:bg-blue-500 text-white"
-              )}
-              onClick={handleSave}
-            >
-              <Save className="w-3 h-3" />
-              {isSaved ? "Saved" : "Save"}
-            </Button>
-            <div className="w-px h-4 bg-slate-700 mx-0.5" />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-slate-500 hover:text-slate-200 hover:bg-slate-800"
-              onClick={handleClose}
-              title={isSaved ? "Close" : "Close (unsaved changes — save first)"}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </div>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg">
+          <FileText
+            className="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+            strokeWidth={2.2}
+          />
+          <span className="text-xs font-semibold text-slate-700 max-w-[180px] truncate">
+            {file.name}
+          </span>
+          {isDirty && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"
+              title="Unsaved changes"
+            />
+          )}
         </div>
 
-        {/* ── unsaved warning banner ────────────────────────────── */}
-        {!isSaved && (
-          <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20">
-            <p className="text-[11px] text-amber-400">
-              You have unsaved changes.{" "}
-              <kbd className="font-mono text-amber-300">Ctrl+S</kbd> to save.
-            </p>
-            <button
-              className="text-[11px] text-amber-400 hover:text-amber-200 underline underline-offset-2"
-              onClick={handleForceClose}
-            >
-              Close anyway
-            </button>
-          </div>
+        <div className="flex-1" />
+        {justSaved && (
+          <span
+            ref={savedBadgeRef}
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} />
+            Saved
+          </span>
         )}
 
-        {/* ── editor ───────────────────────────────────────────── */}
-        <textarea
-          className={cn(
-            "flex-1 w-full resize-none bg-slate-950 text-slate-100",
-            "font-mono text-sm leading-7 px-6 py-4",
-            "focus:outline-none placeholder:text-slate-600",
-            "scrollbar-thin scrollbar-thumb-slate-700"
-          )}
-          value={content}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder="Start typing…"
-          spellCheck={false}
-          autoFocus
-        />
+        {isDirty && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-3 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 gap-1.5"
+            onClick={discard}
+          >
+            <RotateCcw className="w-3 h-3" strokeWidth={2.5} />
+            Discard
+          </Button>
+        )}
 
-        <div className="flex items-center gap-4 px-4 py-1.5 border-t border-slate-800 bg-slate-900/60 text-[11px] text-slate-500">
-          <span>{lineCount} line{lineCount !== 1 ? "s" : ""}</span>
-          <span>{charCount} char{charCount !== 1 ? "s" : ""}</span>
-          <span>{formatSize(new Blob([content]).size)}</span>
-          <span className="ml-auto">Plain text · UTF-8</span>
-        </div>
+        <Button
+          size="sm"
+          className={cn(
+            "h-8 px-3.5 text-xs font-semibold gap-1.5 transition-all shadow-sm",
+            isDirty
+              ? "bg-slate-900 hover:bg-slate-700 text-white"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed",
+          )}
+          onClick={save}
+          disabled={!isDirty}
+        >
+          <Save className="w-3 h-3" strokeWidth={2.5} />
+          Save
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+          onClick={onClose}
+          title="Close (go back to folder)"
+        >
+          <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+        </Button>
+      </div>
+
+      <div className="flex-1 min-h-0 relative">
+        {content === "" && (
+          <p className="absolute top-6 left-6 text-sm text-slate-300 pointer-events-none select-none font-mono">
+            Start typing…
+          </p>
+        )}
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
+          spellCheck={false}
+          className={cn(
+            "w-full h-full resize-none outline-none",
+            "bg-white text-slate-800",
+            "font-mono text-sm leading-7",
+            "px-6 py-5",
+            "border-0",
+            // browser scrollbar
+            "overflow-y-auto",
+          )}
+        />
+      </div>
+
+      <div className="flex items-center gap-4 px-5 py-2 border-t border-slate-100 bg-slate-50/80 flex-shrink-0">
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <AlignLeft className="w-3 h-3" strokeWidth={2} />
+          {lines} line{lines !== 1 ? "s" : ""}
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <Type className="w-3 h-3" strokeWidth={2} />
+          {words} word{words !== 1 ? "s" : ""}
+        </span>
+        <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <Hash className="w-3 h-3" strokeWidth={2} />
+          {chars} char{chars !== 1 ? "s" : ""}
+        </span>
+        <span className="ml-auto text-[11px]">
+          {isDirty ? (
+            <span className="text-amber-500 font-medium">
+              Unsaved changes · Ctrl+S to save
+            </span>
+          ) : (
+            <span className="text-slate-400">Plain text · UTF-8</span>
+          )}
+        </span>
       </div>
     </div>
   );

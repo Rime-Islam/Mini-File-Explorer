@@ -54,18 +54,16 @@ export function CreateItemModal({
   const [name, setName] = useState("");
   const [error, setError] = useState("");
 
-  // refs for GSAP
   const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset state when modal opens
   useEffect(() => {
     if (open) {
       setSelectedType("folder");
       setName("");
       setError("");
-      // Animate type cards in with stagger
+
       setTimeout(() => {
         gsap.fromTo(
           cardRefs.current.filter(Boolean),
@@ -86,18 +84,15 @@ export function CreateItemModal({
             { y: 0, opacity: 1, duration: 0.3, delay: 0.15, ease: "power2.out" }
           );
         }
-        // Auto-focus input after animation
         setTimeout(() => inputRef.current?.focus(), 200);
       }, 0);
     }
   }, [open]);
 
-  // Animate card switch
   function handleTypeSelect(type: NodeType) {
     if (type === selectedType) return;
     setSelectedType(type);
     setError("");
-    // Bounce the selected card
     const idx = TYPE_OPTIONS.findIndex((o) => o.type === type);
     const el = cardRefs.current[idx];
     if (el) {
@@ -113,7 +108,6 @@ export function CreateItemModal({
     const trimmed = name.trim();
     if (!trimmed) {
       setError("Please enter a name.");
-      // Shake the input
       if (formRef.current) {
         gsap.fromTo(
           formRef.current,
@@ -124,7 +118,6 @@ export function CreateItemModal({
       return;
     }
 
-    // Auto-append .txt for text files if missing
     const finalName =
       selectedType === "textfile" && !trimmed.endsWith(".txt")
         ? `${trimmed}.txt`
@@ -152,7 +145,6 @@ export function CreateItemModal({
           "shadow-2xl shadow-black/20"
         )}
       >
-        {/* ── header ─────────────────────────────────────────── */}
         <DialogHeader className="px-5 pt-5 pb-4 border-b border-white/10">
           <DialogTitle className="text-sm font-semibold text-slate-900 tracking-tight">
             Create new item
@@ -165,9 +157,7 @@ export function CreateItemModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── body ───────────────────────────────────────────── */}
-        <div className="px-5 py-4 flex flex-col gap-4">
-          {/* type selector */}
+          <div className="px-5 py-4 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-2.5">
             {TYPE_OPTIONS.map(({ type, label, description, icon: Icon }, i) => {
               const active = selectedType === type;
@@ -186,7 +176,6 @@ export function CreateItemModal({
                       : "border-white/20 bg-white/30 hover:border-white/30 hover:bg-white/40"
                   )}
                 >
-                  {/* check badge */}
                   {active && (
                     <span
                       className={cn(
@@ -198,7 +187,6 @@ export function CreateItemModal({
                     </span>
                   )}
 
-                  {/* icon */}
                   <div
                     className={cn(
                       "w-9 h-9 rounded-md flex items-center justify-center",
@@ -221,7 +209,6 @@ export function CreateItemModal({
                     />
                   </div>
 
-                  {/* text */}
                   <div>
                     <p
                       className={cn(
@@ -240,7 +227,6 @@ export function CreateItemModal({
             })}
           </div>
 
-          {/* name input */}
           <div ref={formRef} className="flex flex-col gap-1.5">
             <Label
               htmlFor="item-name"
@@ -279,12 +265,11 @@ export function CreateItemModal({
               />
             </div>
 
-            {/* error */}
             {error && (
               <p className="text-[11px] text-red-600">{error}</p>
             )}
 
-            {/* hint: auto .txt */}
+    
             {selectedType === "textfile" &&
               name.trim() &&
               !name.trim().endsWith(".txt") && (
@@ -296,7 +281,7 @@ export function CreateItemModal({
           </div>
         </div>
 
-        {/* ── footer ─────────────────────────────────────────── */}
+
         <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 bg-white/20">
           <p className="text-[10px] text-slate-700">
             Press <kbd className="font-mono text-slate-600">Enter</kbd> to
