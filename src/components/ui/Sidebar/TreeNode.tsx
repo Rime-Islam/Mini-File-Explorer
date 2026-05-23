@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { cn } from "@/lib/utils";
 import {
@@ -23,7 +23,8 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import type { FileSystemNode, FolderNode } from "@/types";
+import type { FileSystemNode, FolderNode, NodeType } from "@/types";
+import { CreateItemModal } from "@/components/modal/CreateModal";
 
 interface TreeNodeProps {
   node: FileSystemNode;
@@ -33,7 +34,7 @@ interface TreeNodeProps {
   onNavigate: (id: string) => void;
   onToggle: (id: string) => void;
   onOpenFile: (id: string) => void;
-  onCreateIn: (parentId: string) => void;
+  onCreateNode: (parentId: string, name: string, type: NodeType) => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
 }
@@ -46,11 +47,13 @@ export function TreeNode({
   onNavigate,
   onToggle,
   onOpenFile,
-  onCreateIn,
+  onCreateNode,
   onRename,
   onDelete,
 }: TreeNodeProps) {
   const childrenRef = useRef<HTMLDivElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const folder = node.type === "folder" ? (node as FolderNode) : null;
   const isActive = node.id === activeFolderId;
   const isSelected = node.id === selectedId;
@@ -84,6 +87,16 @@ export function TreeNode({
     } else {
       onOpenFile(node.id);
     }
+  }
+
+  // Opens this node's own modal
+  function openModal(e?: React.MouseEvent) {
+    e?.stopPropagation();
+    setModalOpen(true);
+  }
+
+  function handleCreate(name: string, type: NodeType) {
+    onCreateNode(node.id, name, type);
   }
 
   const paddingLeft = 10 + depth * 14;
@@ -133,22 +146,19 @@ export function TreeNode({
         </span>
       )}
 
-      {/* inline + button on hover */}
+      {/* inline + button — only on folders, visible on hover */}
       {folder && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-border"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCreateIn(node.id);
-              }}
+              onClick={openModal}
               aria-label={`New item in ${node.name}`}
             >
               <Plus className="w-3 h-3 text-muted-foreground" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right">New item</TooltipContent>
+          <TooltipContent side="right">New item in {node.name}</TooltipContent>
         </Tooltip>
       )}
     </div>
@@ -159,12 +169,14 @@ export function TreeNode({
       <ContextMenu>
         <ContextMenuTrigger asChild>{rowContent}</ContextMenuTrigger>
         <ContextMenuContent className="w-44">
+          {/* folder actions */}
           {folder && (
-            <ContextMenuItem onClick={() => onCreateIn(node.id)}>
+            <ContextMenuItem onClick={() => openModal()}>
               <Plus className="w-3.5 h-3.5 mr-2" />
               New item inside
             </ContextMenuItem>
           )}
+          {/* file actions */}
           {!folder && (
             <ContextMenuItem onClick={() => onOpenFile(node.id)}>
               <FileText className="w-3.5 h-3.5 mr-2" />
@@ -203,12 +215,22 @@ export function TreeNode({
               onNavigate={onNavigate}
               onToggle={onToggle}
               onOpenFile={onOpenFile}
-              onCreateIn={onCreateIn}
+              onCreateNode={onCreateNode}
               onRename={onRename}
               onDelete={onDelete}
             />
           ))}
         </div>
+      )}
+
+      {/* modal — only rendered for folder nodes */}
+      {folder && (
+        <CreateItemModal
+          open={modalOpen}
+          parentFolderName={node.name}
+          onOpenChange={setModalOpen}
+          onCreate={handleCreate}
+        />
       )}
     </div>
   );

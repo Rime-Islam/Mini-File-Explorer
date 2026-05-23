@@ -1,25 +1,23 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
+
 import { TreeNode } from "./TreeNode";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import {
-  FolderPlus,
-  Clock,
-  Star,
-  Trash2,
-  HardDrive,
-} from "lucide-react";
-import type { FolderNode } from "@/types";
+import { Clock, FolderPlus, HardDrive, Star, Trash2 } from "lucide-react";
+import type { FolderNode, NodeType } from "@/types";
+import { CreateItemModal } from "@/components/modal/CreateModal";
+
 interface SidebarProps {
   root: FolderNode;
   activeFolderId: string;
+  activeFolderName: string;
   selectedId: string | null;
   onNavigate: (id: string) => void;
   onToggleFolder: (id: string) => void;
   onOpenFile: (id: string) => void;
-  onCreateIn: (parentId: string) => void;
+  onCreateNode: (parentId: string, name: string, type: NodeType) => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
 }
@@ -33,18 +31,20 @@ const QUICK_ACCESS = [
 export function Sidebar({
   root,
   activeFolderId,
+  activeFolderName,
   selectedId,
   onNavigate,
   onToggleFolder,
   onOpenFile,
-  onCreateIn,
+  onCreateNode,
   onRename,
   onDelete,
 }: SidebarProps) {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const treeRef = useRef<HTMLDivElement>(null);
+  // Header + button opens modal scoped to the active folder
+  const [headerModalOpen, setHeaderModalOpen] = useState(false);
 
-  // GSAP: mount animation — sidebar slides in from left
   useEffect(() => {
     if (!sidebarRef.current) return;
     gsap.fromTo(
@@ -54,21 +54,13 @@ export function Sidebar({
     );
   }, []);
 
-  // GSAP: stagger tree items on first render
   useEffect(() => {
     if (!treeRef.current) return;
     const rows = treeRef.current.querySelectorAll(".tree-row");
     gsap.fromTo(
       rows,
       { x: -8, opacity: 0 },
-      {
-        x: 0,
-        opacity: 1,
-        duration: 0.2,
-        stagger: 0.03,
-        ease: "power2.out",
-        delay: 0.1,
-      }
+      { x: 0, opacity: 1, duration: 0.2, stagger: 0.03, ease: "power2.out", delay: 0.1 }
     );
   }, []);
 
@@ -77,7 +69,7 @@ export function Sidebar({
       ref={sidebarRef}
       className="flex flex-col w-[220px] min-w-[220px] border-r bg-muted/40 h-full"
     >
-      {/* header */}
+      {/* ── header ───────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3.5 py-3 border-b">
         <div className="flex items-center gap-2">
           <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
@@ -91,20 +83,19 @@ export function Sidebar({
               variant="ghost"
               size="icon"
               className="h-6 w-6"
-              onClick={() => onCreateIn(root.id)}
-              aria-label="New folder in root"
+              onClick={() => setHeaderModalOpen(true)}
+              aria-label="New item in current folder"
             >
               <FolderPlus className="w-3.5 h-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="right">New folder</TooltipContent>
+          <TooltipContent side="right">New item</TooltipContent>
         </Tooltip>
       </div>
 
-      {/* file tree */}
+      {/* ── tree ─────────────────────────────────────────── */}
       <ScrollArea className="flex-1 py-1.5">
         <div ref={treeRef} className="px-2">
-          {/* root folder itself */}
           <div className="tree-row">
             <TreeNode
               node={root}
@@ -114,7 +105,7 @@ export function Sidebar({
               onNavigate={onNavigate}
               onToggle={onToggleFolder}
               onOpenFile={onOpenFile}
-              onCreateIn={onCreateIn}
+              onCreateNode={onCreateNode}  // passes the raw action down
               onRename={onRename}
               onDelete={onDelete}
             />
@@ -122,7 +113,7 @@ export function Sidebar({
         </div>
       </ScrollArea>
 
-      {/* quick access */}
+      {/* ── quick access ──────────────────────────────────── */}
       <div className="border-t px-3 py-2.5">
         <p className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground mb-1.5">
           Quick access
@@ -139,6 +130,14 @@ export function Sidebar({
           ))}
         </div>
       </div>
+
+      {/* Header-level modal — creates in the currently active folder */}
+      <CreateItemModal
+        open={headerModalOpen}
+        parentFolderName={activeFolderName}
+        onOpenChange={setHeaderModalOpen}
+        onCreate={(name, type) => onCreateNode(activeFolderId, name, type)}
+      />
     </aside>
   );
 }
