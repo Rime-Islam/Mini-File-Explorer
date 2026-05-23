@@ -23,7 +23,7 @@ export function useFileSystem() {
 
   const activeFolder = (findNodeById(root, activeFolderId) as FolderNode | null) ?? root;
   const breadcrumbs = getBreadcrumbs(root, activeFolderId);
-  const openFile = openFileId ? findNodeById(root, openFileId) : null;
+  // const openFile = openFileId ? findNodeById(root, openFileId) : null;
 
   const navigateTo = useCallback((folderId: string) => {
     setActiveFolderId(folderId);
